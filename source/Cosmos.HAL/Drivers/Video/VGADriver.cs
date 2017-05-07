@@ -1,11 +1,11 @@
-﻿#define COSMOSDEBUG
+#define COSMOSDEBUG
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Drawing;
-using Cosmos.Core;
 using Cosmos.Debug.Kernel;
+using Cosmos.Core;
 
 /*****************************************************************************
 Sets VGA-compatible video modes without using the BIOS
@@ -14,10 +14,14 @@ Sets VGA-compatible video modes without using the BIOS
  * by Stephen Remde
 //*/
 
-namespace Cosmos.HAL
+namespace Cosmos.HAL.Drivers
 {
-    public class VGAScreen
+
+    public class VGADriver
     {
+
+    private Core.IOGroup.VGA IO = Core.Global.BaseIOGroups.VGA;
+        
         internal Debugger mDebugger = new Debugger("HAL", "VGA");
         private const byte NumSeqRegs = 5;
         private const byte NumCRTCRegs = 25;
@@ -176,12 +180,6 @@ namespace Cosmos.HAL
         public SetPixelDelegate SetPixel;
         public GetPixelDelegate GetPixel;
 
-        public VGAScreen()
-        {
-            SetPixel = new SetPixelDelegate(SetPixelNoMode);
-            GetPixel = new GetPixelDelegate(GetPixelNoMode);
-        }
-
         public delegate void SetPixelDelegate(uint x, uint y, uint c);
         public delegate uint GetPixelDelegate(uint x, uint y);
 
@@ -244,6 +242,8 @@ namespace Cosmos.HAL
                     throw new Exception("Invalid text size.");
             }
         }
+
+
         public void SetGraphicsMode(ScreenSize aSize, ColorDepth aDepth)
         {
             switch (aSize)
@@ -1253,6 +1253,43 @@ namespace Cosmos.HAL
     0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D, 0x3E, 0x3F,
     0x01, 0x00, 0x0F, 0x00, 0x00
 };
+
+        public VGADriver(ScreenSize size, ColorDepth depth)
+        {
+            SetGraphicsMode(size, depth);
+        }
+
+        public VGADriver()
+        {
+        }
         #endregion
+
+        public void SetVRAM(uint index, byte value)
+        {
+            Global.mDebugger.SendInternal($"Writing to driver memory in position {index} value {value} (as byte)");
+            IO.LinearFrameBuffer.Bytes[index] = value;
+        }
+
+        public void SetVRAM(uint index, ushort value)
+        {
+            Global.mDebugger.SendInternal($"Writing to driver memory in position {index} value {value} (as ushort)");
+            IO.LinearFrameBuffer.Words[index] = value;
+        }
+
+        public void SetVRAM(uint index, uint value)
+        {
+            //Global.mDebugger.SendInternal($"Writing to driver memory in position {index} value {value} (as uint)");
+            IO.LinearFrameBuffer.DWords[index] = value;
+        }
+
+        public byte GetVRAM(uint index)
+        {
+            return IO.LinearFrameBuffer.Bytes[index];
+        }
+
+        public void ClearVRAM(uint value)
+        {
+            IO.LinearFrameBuffer.Fill(value);
+        }
     }
 }
