@@ -1,4 +1,4 @@
-﻿//#define COSMOSDEBUG
+//#define COSMOSDEBUG
 using Cosmos.System.Graphics;
 
 namespace Cosmos.System.Graphics
@@ -12,11 +12,13 @@ namespace Cosmos.System.Graphics
          */
         static private Canvas MyVideoDriver = null;
 
-        public static Canvas GetFullScreenCanvas(Mode mode)
+        public static Canvas GetFullScreenCanvas(Mode mode, VGAScreen VGA)
         {
             Global.mDebugger.SendInternal("GetFullScreenCanvas() with mode " + mode);
 
-            if (MyVideoDriver == null)
+            if (MyVideoDriver == VGA)
+                return MyVideoDriver = new VGAScreen(mode);
+            else if (MyVideoDriver == null)
                 return MyVideoDriver = new VBEScreen(mode);
 
             /* We have already got a VideoDriver istance simple change its mode */
@@ -24,9 +26,11 @@ namespace Cosmos.System.Graphics
             return MyVideoDriver;
         }
 
-        public static Canvas GetFullScreenCanvas()
+        public static Canvas GetFullScreenCanvas(VGAScreen VGA)
         {
             Global.mDebugger.SendInternal($"GetFullScreenCanvas() with default mode");
+            if (MyVideoDriver == VGA)
+                return new VGAScreen();
             if (MyVideoDriver == null)
                 return new VBEScreen();
 
